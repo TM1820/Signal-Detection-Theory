@@ -19,6 +19,7 @@
             justify-content: center;
             align-items: center;
             padding: 20px;
+
         }
         
         .container {
@@ -28,10 +29,11 @@
             max-width: 800px;
             width: 100%;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            
         }
         
         h1 {
-            color: #16302b;
+            color: #3c0443;
             margin-bottom: 20px;
             text-align: center;
         }
@@ -103,7 +105,7 @@
             justify-content: center;
         }
         
-        .grid-2 { grid-template-columns: repeat(2, 100px); }
+        .grid-2 { grid-template-columns: repYeat(2, 100px); }
         .grid-3 { grid-template-columns: repeat(3, 100px); }
         .grid-4 { grid-template-columns: repeat(4, 100px); }
         .grid-5 { grid-template-columns: repeat(5, 100px); }
@@ -169,6 +171,51 @@
             background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
         }
         
+        .confidence-scale {
+            margin-top: 40px;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        
+        .confidence-scale h3 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+        
+        .confidence-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+        
+        .confidence-buttons button {
+            width: 70px;
+            height: 70px;
+            padding: 0;
+            font-size: 24px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #006989 0%, #004d66 100%);
+        }
+        
+        .confidence-buttons button:hover {
+            transform: scale(1.1);
+        }
+        
+        .confidence-label {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+            font-size: 15px;
+            color: #666;
+            padding: 0 20px;
+            font-weight: 600;
+        }
+        
         .centered {
             text-align: center;
         }
@@ -194,7 +241,12 @@
         }
 
         .no {
-            color: maroon
+            color: maroon;
+        }
+
+        #thankYouPage {
+            background-image: url('../../../../../../Downloads/thank-you-image.jpg');
+            background-size: 100%;
         }
     </style>
 </head>
@@ -202,7 +254,7 @@
     <div class="container">
         <!-- Welcome Page -->
         <div id="welcomePage" class="page active">
-            <h1>Working Memory Experiment</h1>
+            <h1>Tannu's Working Memory Experiment</h1>
             <div class="instructions">
                 <p style="font-size: 18px; line-height: 1.8;">
                     <h2 style="text-align: center;">Welcome!</h2>
@@ -210,9 +262,6 @@
                     and asked to remember their positions. Your task is to determine whether a highlighted square appeared 
                     in the previous display.</p>
                 </p>
-                <!-- <p style="margin-top: 20px; font-size: 18px;">
-                    The experiment will take approximately 10-15 minutes to complete.
-                </p> -->
             </div>
             <div class="centered">
                 <button onclick="showPage('participantPage')">Begin</button>
@@ -230,10 +279,6 @@
                 <label for="age">Age:</label>
                 <input type="number" id="age" min="18" max="100" required>
             </div>
-            <!-- <div class="form-group">
-                <label for="gender">Gender:</label>
-                <input type="text" id="gender" required>
-            </div> -->
             <div class="centered">
                 <button onclick="saveParticipantInfo()">Continue</button>
             </div>
@@ -251,11 +296,11 @@
                     <li>Your task: <b>Decide if this highlighted square appeared in the same position in the previous display</b></li>
                     <li>Click <b><span class="yes">"YES"</span></b> if the square WAS in that position</li>
                     <li>Click <b><span class="no">"NO"</span></b> if the square was NOT in that position</li>
+                    <li>After each response, rate your confidence from 1 (not confident) to 5 (very confident)</li>
                 </ul>
                 <h2 style="margin-top: 20px;">Important:</h2>
                 <ul>
                     <li>The experiment consists of 5 sets (each with 15 trials) with increasing difficulty</li>
-                    <!-- <li>Each set has 15 trials</li> -->
                     <li><b>Try to be as accurate as possible</b></li>
                     <li>Respond as quickly as you can while maintaining accuracy</li>
                 </ul>
@@ -278,8 +323,9 @@
         <div id="thankYouPage" class="page">
             <div class="thank-you">
                 <h1>Thank You! 🎉</h1>
-                <p>You have completed the experiment.</p>
+                <p >You have completed the experiment.</p>
                 <p style="margin-top: 20px;">Your data has been prepared for download.</p>
+                <p>Would you be a doll and send this CSV file to the experimenter?</p>
                 <button onclick="downloadResults()" style="margin-top: 30px;">Download Results</button>
             </div>
         </div>
@@ -288,10 +334,10 @@
     <script>
         // Experiment configuration
         const SETS = [2, 3, 4, 5, 6]; // Number of squares in each set
-        const TRIALS_PER_SET = 15;
-        const ENCODING_TIME = 2000; // Time to view squares (ms)
+        const TRIALS_PER_SET = 20;
+        const ENCODING_TIME = 1000; // Time to view squares (ms)
         const RETENTION_TIME = 1000; // Delay before test (ms)
-        const FIXATION_TIME = 500; // Fixation cross duration (ms)
+        const FIXATION_TIME = 300; // Fixation cross duration (ms)
         
         // Colors for squares
         const COLORS = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', 
@@ -305,6 +351,7 @@
         let currentPositions = [];
         let targetPresent = false;
         let trialStartTime = 0;
+        let currentResponse = null;
 
         function showPage(pageId) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -314,7 +361,6 @@
         function saveParticipantInfo() {
             const id = document.getElementById('participantId').value.trim();
             const age = document.getElementById('age').value.trim();
-            // const gender = document.getElementById('gender').value.trim();
             
             if (!id || !age) {
                 alert('Please fill in all fields');
@@ -485,16 +531,47 @@
         }
 
         function recordResponse(response) {
+            currentResponse = response;
+            
+            // Remove YES/NO buttons
+            const area = document.getElementById('stimulusArea');
+            const buttonDiv = area.querySelector('.response-buttons');
+            if (buttonDiv) {
+                buttonDiv.remove();
+            }
+            
+            // Show confidence rating scale
+            const confidenceDiv = document.createElement('div');
+            confidenceDiv.className = 'confidence-scale';
+            confidenceDiv.innerHTML = `
+                <h3>How confident are you in your response?</h3>
+                <div class="confidence-buttons">
+                    <button onclick="recordConfidence(1)">1</button>
+                    <button onclick="recordConfidence(2)">2</button>
+                    <button onclick="recordConfidence(3)">3</button>
+                    <button onclick="recordConfidence(4)">4</button>
+                    <button onclick="recordConfidence(5)">5</button>
+                </div>
+                <div class="confidence-label">
+                    <span>Not Confident</span>
+                    <span>Very Confident</span>
+                </div>
+            `;
+            area.appendChild(confidenceDiv);
+        }
+
+        function recordConfidence(confidence) {
             const rt = Date.now() - trialStartTime;
-            const correct = (response === targetPresent);
+            const correct = (currentResponse === targetPresent);
             
             trialResults.push({
                 set: currentSet + 1,
                 setSize: SETS[currentSet],
                 trial: currentTrial + 1,
                 targetPresent: targetPresent ? 1 : 0,
-                response: response ? 1 : 0,
+                response: currentResponse ? 1 : 0,
                 correct: correct ? 1 : 0,
+                confidence: confidence,
                 rt: rt
             });
             
@@ -601,12 +678,11 @@
         function downloadResults() {
             let csv = 'Participant ID,' + participantData.id + '\n';
             csv += 'Age,' + participantData.age + '\n';
-            // csv += 'Gender,' + participantData.gender + '\n';
             csv += '\nTrial Data\n';
-            csv += 'Set,SetSize,Trial,TargetPresent,Response,Correct,RT\n';
+            csv += 'Set,SetSize,Trial,TargetPresent,Response,Correct,Confidence,RT\n';
             
             trialResults.forEach(r => {
-                csv += `${r.set},${r.setSize},${r.trial},${r.targetPresent},${r.response},${r.correct},${r.rt}\n`;
+                csv += `${r.set},${r.setSize},${r.trial},${r.targetPresent},${r.response},${r.correct},${r.confidence},${r.rt}\n`;
             });
             
             // Calculate overall SDT
@@ -641,6 +717,21 @@
                 csv += `${i+1},${SETS[i]},${sdt.faRate},${sdt.hitRate}\n`;
             }
             
+            // Confidence analysis
+            csv += '\nConfidence Analysis\n';
+            csv += 'Set,SetSize,AvgConfidence,AvgConfidence_Correct,AvgConfidence_Incorrect\n';
+            for (let i = 0; i < SETS.length; i++) {
+                const setResults = trialResults.filter(r => r.set === i + 1);
+                const avgConf = (setResults.reduce((sum, r) => sum + r.confidence, 0) / setResults.length).toFixed(2);
+                const correctResults = setResults.filter(r => r.correct === 1);
+                const incorrectResults = setResults.filter(r => r.correct === 0);
+                const avgConfCorrect = correctResults.length > 0 ? 
+                    (correctResults.reduce((sum, r) => sum + r.confidence, 0) / correctResults.length).toFixed(2) : 'N/A';
+                const avgConfIncorrect = incorrectResults.length > 0 ? 
+                    (incorrectResults.reduce((sum, r) => sum + r.confidence, 0) / incorrectResults.length).toFixed(2) : 'N/A';
+                csv += `${i+1},${SETS[i]},${avgConf},${avgConfCorrect},${avgConfIncorrect}\n`;
+            }
+            
             // Download
             const blob = new Blob([csv], { type: 'text/csv' });
             const url = window.URL.createObjectURL(blob);
@@ -659,6 +750,4 @@
         }
     </script>
 </body>
-
 </html>
-
